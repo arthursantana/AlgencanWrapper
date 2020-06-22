@@ -84,7 +84,7 @@ function make_evalc(fun)
         end
 
         j_n = Int(n)
-        j_ind = Int(ind) + 1 # convert 0-indexed to 1-indexed
+        j_ind = Int(ind)# + 1 # convert 0-indexed to 1-indexed
 
         if j_ind > j_n
             unsafe_store!(flag, Cint(-1))
@@ -112,7 +112,7 @@ function make_evaljac(fun)
         end
 
         j_n = Int(n)
-        j_ind = Int(ind) + 1 # convert 0-indexed to 1-indexed
+        j_ind = Int(ind)# + 1 # convert 0-indexed to 1-indexed
 
         if j_ind > j_n
             unsafe_store!(flag, Cint(-1))
@@ -151,7 +151,7 @@ function make_evalhc(fun)
         end
 
         j_n = Int(n)
-        j_ind = Int(ind) + 1 # convert 0-indexed to 1-indexed
+        j_ind = Int(ind)# + 1 # convert 0-indexed to 1-indexed
 
         if j_ind > j_n
             unsafe_store!(flag, Cint(-1))
@@ -211,15 +211,42 @@ function myevalhlp(n::Cint, x::Ptr{Cdouble}, m::Cint, lambda::Ptr{Cdouble}, scal
     return nothing
 end
 
-function optimize(n::Int,
+function optimize(;
+                  n::Int=1,
+                  m::Int=0,
                   f::Function,
+
                   g::Union{Function, Nothing}=nothing,
                   h::Union{Function, Nothing}=nothing,
-                  m::Int=0,
+
                   c::Union{Function, Nothing}=nothing,
-                  equatn::Union{Array{Int}, Nothing}=nothing,
                   jac::Union{Function, Nothing}=nothing,
-                  hc::Union{Function, Nothing}=nothing)
+                  hc::Union{Function, Nothing}=nothing,
+                  equatn::Union{Array{Int}, Nothing}=nothing,
+                  linear::Union{Array{Int}, Nothing}=nothing,
+
+                  x::Union{Array{Float64}, Nothing}=nothing,
+                  l::Union{Array{Float64}, Nothing}=nothing,
+                  u::Union{Array{Float64}, Nothing}=nothing,
+                  lambda::Union{Array{Float64}, Nothing}=nothing,
+
+                  jcnnzmax = 1e10,
+                  hnnzmax = 1e10,
+
+                  epsfeas = 1e-8,
+                  epsopt = 1e-8,
+                  efstain = sqrt(epsfeas),
+                  eostain = epsopt^1.5,
+                  efacc = sqrt(epsfeas),
+                  eoacc = sqrt(epsopt),
+
+                  checkder = 0,
+
+                  outputfnm = "algencan.out",
+                  specfnm = "",
+                  nvparam = 1,
+                  vparam = ["ITERATIONS-OUTPUT-DETAIL 10"]
+                 )
     myevalf = make_evalf(f)
     myevalg = make_evalg(g)
     myevalh = make_evalh(h)
@@ -250,18 +277,33 @@ function optimize(n::Int,
 
 
 
-    # additional problem description
-    x = zeros(n)
+    if (x == nothing)
+        x = zeros(n)
+    end
 
-    l = [-10.0 -1.0e20] # vector of lower bounds of x
-    u = [10.0 1.0e20] # upper
+    if (l == nothing)
+        l = zeros(n)
+    end
+
+    if (u == nothing)
+        u = ones(n)
+    end
 
     if equatn == nothing
-        equatn = zeros(m)
+        equatn = zeros(Cuchar, m)
+    else
+        equatn = map(Cuchar, equatn)
     end
-    equatn = map(Cuchar, equatn) # for each i ∈ {1, m}, equatn[i] == ? iff the mth constraint is an equation (instead of an inequality)
-    linear = map(Cuchar, zeros(m)) # same, for linearity
-    linear[1] = Cuchar(1)
+
+    if linear == nothing
+        linear = zeros(Cuchar, m)
+    else
+        linear = map(Cuchar, linear)
+    end
+
+    if lambda == nothing
+        lambda = zeros(m)
+    end
 
     coded = map(Cuchar, zeros(11)) # same, for being effectively coded by the user
     if f != nothing
@@ -283,12 +325,10 @@ function optimize(n::Int,
         coded[6] = Cuchar(1)
     end
 
-    lambda = zeros(m)
-
     checkder = 0 # 1 to check derivatives with finite differences
 
-    jcnnzmax = 4 # max number of non nulls in the sparse Jacobian of the constraints
-    hnnzmax = 7 # same, for the hessian of the objective function
+    jcnnzmax = 100000 # max number of non nulls in the sparse Jacobian of the constraints
+    hnnzmax = 100000 # same, for the hessian of the objective function
 
     epsfeas = 1e-8 # epsilon for feasibility
     epsopt = 1e-8 #  epsilon for optimality
@@ -354,7 +394,7 @@ function optimize(n::Int,
 
     # OUTPUTS ARE NOT WORKING CORRECTLY (JULIA'S PROBABLY PASSING BY VALUE)
 
-    return x, fval
+    return x, lambda
 end
 
 function unload()
