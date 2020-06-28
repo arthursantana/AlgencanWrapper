@@ -20,28 +20,12 @@ function c(i, x)
     end
 end
 
-#function Dc(i, x)
-#    if i == 1
-#        return [1, 2], [2*x[1], -1.0]
-#    else
-#        return [1, 2], [-1.0, -1.0]
-#    end
-#end
-#
-#function D²c(i, x)
-#    if i == 1
-#        return [1], [1], [2]
-#    else
-#        return [], [], []
-#    end
-#end
-
 x, lambda = AlgencanWrapper.optimize(
                                      n = 1, m = 2,
 
                                      f = f, g = ∇f, h = ∇∇f,
                                      equatn = [0, 0],
-                                     c = c,# jac = Dc, hc = D²c, equatn = [0, 0],
+                                     c = c,
 
                                      x = [0.0],
                                      l = [-100.0],
@@ -49,7 +33,5 @@ x, lambda = AlgencanWrapper.optimize(
                                     )
 println(x)
 println(f(x))
-#println([∇f(x)[1] - lambda[1]*c(1, x)])
-#         ∇f(x)[2] - lambda[2]*c(2, x)])
 
 AlgencanWrapper.unload()
