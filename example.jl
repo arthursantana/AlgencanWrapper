@@ -29,7 +29,7 @@ x, lambda = AlgencanWrapper.optimize(
 
                                      x = [0.0],
                                      l = [-100.0],
-                                     u = [100.0]
+                                     u = [100.0],
                                     )
 println(x)
 println(f(x))

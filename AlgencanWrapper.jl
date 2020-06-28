@@ -230,8 +230,8 @@ function optimize(;
                   u::Union{Array{Float64}, Nothing}=nothing,
                   lambda::Union{Array{Float64}, Nothing}=nothing,
 
-                  jcnnzmax = 1e10,
-                  hnnzmax = 1e10,
+                  jcnnzmax = 1e8,
+                  hnnzmax = 1e8,
 
                   epsfeas = 1e-8,
                   epsopt = 1e-8,
@@ -324,23 +324,6 @@ function optimize(;
     if hc != nothing
         coded[6] = Cuchar(1)
     end
-
-    checkder = 0 # 1 to check derivatives with finite differences
-
-    jcnnzmax = 100000 # max number of non nulls in the sparse Jacobian of the constraints
-    hnnzmax = 100000 # same, for the hessian of the objective function
-
-    epsfeas = 1e-8 # epsilon for feasibility
-    epsopt = 1e-8 #  epsilon for optimality
-    efstain = sqrt(epsfeas) # epsilons for stopping at unfeasible stationary points
-    eostain = epsopt^1.5 # I still don't understand these vars perfectly
-    efacc = sqrt(epsfeas) # at which level of feasibility newton-like acceleration starts
-    eoacc = sqrt(epsopt)
-
-    outputfnm = "algencan.out"
-    specfnm = ""
-    nvparam = 1
-    vparam = ["ITERATIONS-OUTPUT-DETAIL 10"]
 
     fval = cnorm = snorm = nlpsupn = inform = 0.0
 
